@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Don't Miss</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+</head>
+<body>
+    <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas" width=600 height=960></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+        <div id="unity-warning"> </div>
+    </div>
+    <script>
+          var container = document.querySelector("#unity-container");
+          var canvas = document.querySelector("#unity-canvas");
+          var loadingBar = document.querySelector("#unity-loading-bar");
+          var progressBarFull = document.querySelector("#unity-progress-bar-full");
+
+          // Shows a temporary message banner/ribbon for a few seconds, or
+          // a permanent error message on top of the canvas if type=='error'.
+          // If type=='warning', a yellow highlight color is used.
+          // Modify or remove this function to customize the visually presented
+          // way that non-critical warnings and error messages are presented to the
+          // user.
+
+          var buildUrl = "Build";
+          var loaderUrl = buildUrl + "/Build.loader.js";
+          var config = {
+              dataUrl: buildUrl + "/Build.data.unityweb",
+              frameworkUrl: buildUrl + "/Build.framework.js.unityweb",
+              codeUrl: buildUrl + "/Build.wasm.unityweb",
+              streamingAssetsUrl: "StreamingAssets",
+              companyName: "HYPERNOVA GAMES",
+              productName: "Don't Miss",
+              productVersion: "1.0",
+          };
+
+          // By default Unity keeps WebGL canvas render target size matched with
+          // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+          // Set this to false if you want to decouple this synchronization from
+          // happening inside the engine, and you would instead like to size up
+          // the canvas DOM size and WebGL render target sizes yourself.
+          // config.matchWebGLToCanvasSize = false;
+
+          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+              // Mobile device style: fill the whole browser client area with the game canvas:
+
+              var meta = document.createElement('meta');
+              meta.name = 'viewport';
+              meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+              document.getElementsByTagName('head')[0].appendChild(meta);
+              container.className = "unity-mobile";
+
+              // To lower canvas resolution on mobile devices to gain some
+              // performance, uncomment the following line:
+              // config.devicePixelRatio = 1;
+
+              canvas.style.width = window.innerWidth + 'px';
+              canvas.style.height = window.innerHeight + 'px';
+
+          } else {
+              // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+
+              canvas.style.width = "65vh";
+              canvas.style.height = "100vh";
+          }
+
+          loadingBar.style.display = "block";
+
+          var script = document.createElement("script");
+          script.src = loaderUrl;
+          script.onload = () => {
+              createUnityInstance(canvas, config, (progress) => {
+                  progressBarFull.style.width = 100 * progress + "%";
+              }).then((unityInstance) => {
+                  window.unityInstance = unityInstance;
+                  loadingBar.style.display = "none";
+              }).catch((message) => {
+                  alert(message);
+              });
+          };
+          document.body.appendChild(script);
+    </script>
+
+    <!--VK SDK-->
+    <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+
+    <script>
+        vkBridge.send('VKWebAppInit');
+    </script>
+
+    <script>
+        //var access_token;
+        //var version;
+        var user_id;
+
+        function runAtStart() {
+            vkBridge.send("VKWebAppAllowMessagesFromGroup", { "group_id": 210554771, "key": "" }).then(() => {
+                console.log("Messages from group allowed!");
+            });
+        }
+
+        function getInfo() {
+            //vkBridge.send('VKWebAppGetAuthToken', { "app_id": 8024061, "scope": "" }).then(data => {
+            //    access_token = data.access_token;
+            //    console.log('Token received successfully')
+            //});
+
+            vkBridge.send('VKWebAppGetUserInfo').then(data => {
+                user_id = data.id;
+                console.log('User id: ' + user_id);
+            });
+
+            //vkBridge.send('VKWebAppGetClientVersion').then(data => {
+            //    version = data.version;
+            //    console.log('User VK version: ' + version);
+            //});
+        } 
+
+        function getUserData() {
+            vkBridge.send("VKWebAppStorageGet", { "keys": ["_save"] }).then(score => {
+                console.log('Score received from the server: ' + score.keys[0].value);
+                window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', score.keys[0].value.toString());
+            });
+        }
+
+        function setUserData(score, token) {
+            console.log(token);
+
+            vkBridge.send('VKWebAppStorageSet', { "key": "_save", "value": score.toString() }).then(() => {
+                console.log('Score passed to the server: ' + score);
+            });
+
+            vkBridge.send("VKWebAppCallAPIMethod",
+                {
+                    "method": "secure.addAppEvent", "request_id": "request",
+                    "params": { "user_id": user_id.toString(), "activity_id": "2", "value": score.toString(), "v": "5.101", "access_token": token.toString() }
+                }
+            ).then(data => {
+                console.log(data);
+            });
+        }
+
+        function showFullscreenAd() {
+            vkBridge.send('VKWebAppShowNativeAds', { ad_format: "interstitial" }).then(() => {
+                window.unityInstance.SendMessage('Vk Sdk', 'OnInterstitialShown');
+                console.log('Interstitial was shown!');
+            });
+        }
+
+        function showRewardedAd(id) {
+            vkBridge.send('VKWebAppShowNativeAds', { ad_format: "reward" }).then(() => {
+                window.unityInstance.SendMessage('Vk Sdk', 'OnRewarded', id);
+                console.log('Rewarded! Id: ' + id);
+            });
+        }
+
+        function showNotificationsBox() {
+            vkBridge.send('VKWebAppAllowNotifications').then(() => {
+                console.log('Notifications allowed!');
+            });
+        }
+
+        function showLeaderBoardBox() {
+            var highscore = 0;
+            vkBridge.send("VKWebAppStorageGet", { "keys": ["_save"] }).then(score => {
+                highscore = score.keys[0].value;
+                vkBridge.send("VKWebAppShowLeaderBoardBox", { user_result: highscore })
+                    .then(data => console.log(data.success))
+                    .catch(error => console.log(error));
+            });
+        }
+
+        function showAddToFavouritesBox() {
+            vkBridge.send('VKWebAppAddToMenu').then(() => {
+                console.log('Added to menu!');
+            });
+        }
+
+        function showInviteBox() {
+            vkBridge.send("VKWebAppShowInviteBox", {})
+                .then(data => console.log(data.success))
+                .catch(error => console.log(error));
+        }
+
+        function showShareBox() {
+            vkBridge.send("VKWebAppStorageGet", { "keys": ["_save"] }).then(score => {
+                var message = "Я настолько ловок, что смог набрать " + score.keys[0].value + "очков! Сможете лучше? Ссылка на игру: https://vk.com/app8024061";
+                vkBridge.send("VKWebAppShowWallPostBox", { "message": message.toString() });
+            });
+        }
+
+    </script>
+
+</body>
+</html>
