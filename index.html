@@ -98,48 +98,22 @@
     </script>
 
     <script>
-        //var access_token;
-        //var version;
         var user_id;
 
         function runAtStart() {
             vkBridge.send("VKWebAppAllowMessagesFromGroup", { "group_id": 210554771, "key": "" }).then(() => {
                 console.log("Messages from group allowed!");
             });
-
-            vkBridge.send('VKWebAppStorageSet', { "key": "_save", "value": "0" }).then(() => {
-                console.log('Score passed to the server: ' + score);
-            });
         }
-
-        function getInfo() {
-            //vkBridge.send('VKWebAppGetAuthToken', { "app_id": 8024061, "scope": "" }).then(data => {
-            //    access_token = data.access_token;
-            //    console.log('Token received successfully')
-            //});
-
-            vkBridge.send('VKWebAppGetUserInfo').then(data => {
-                user_id = data.id;
-                console.log('User id: ' + user_id);
-            });
-
-            //vkBridge.send('VKWebAppGetClientVersion').then(data => {
-            //    version = data.version;
-            //    console.log('User VK version: ' + version);
-            //});
-        } 
 
         function getUserData() {
             vkBridge.send("VKWebAppStorageGet", { "keys": ["_save"] }).then(score => {
                 console.log('Score received from the server: ' + score.keys[0].value);
-                //window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', score.keys[0].value.toString());
-                window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', "0");
+                window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', score.keys[0].value.toString());
             });
         }
 
         function setUserData(score, token) {
-            console.log(token);
-
             vkBridge.send('VKWebAppStorageSet', { "key": "_save", "value": score.toString() }).then(() => {
                 console.log('Score passed to the server: ' + score);
             });
@@ -147,7 +121,7 @@
             vkBridge.send("VKWebAppCallAPIMethod",
                 {
                     "method": "secure.addAppEvent", "request_id": "request",
-                    "params": { "user_id": user_id.toString(), "activity_id": "2", "value": score.toString(), "v": "5.101", "access_token": token.toString() }
+                    "params": { "user_id": user_id.toString(), "activity_id": "2", "value": score.toString(), "v": "5.101", "access_token": token }
                 }
             ).then(data => {
                 console.log(data);
