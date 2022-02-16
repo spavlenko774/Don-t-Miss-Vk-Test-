@@ -128,13 +128,12 @@
         function getUserData() {
             vkBridge.send("VKWebAppStorageGet", { "keys": ["_save"] }).then(score => {
                 console.log('Score received from the server: ' + score.keys[0].value);
-                window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', "0");
-                //window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', score.keys[0].value.toString());
+                window.unityInstance.SendMessage('Vk Sdk', 'GetDataFromVk', score.keys[0].value.toString());
             });
         }
 
         function setUserData(score, token) {
-            console.log(token.toString());
+            console.log(token);
 
             vkBridge.send('VKWebAppStorageSet', { "key": "_save", "value": score.toString() }).then(() => {
                 console.log('Score passed to the server: ' + score);
