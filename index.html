@@ -107,7 +107,9 @@
                 console.log("Messages from group allowed!");
             });
 
-            setUserData("0", "123");
+            vkBridge.send('VKWebAppStorageSet', { "key": "_save", "value": "0" }).then(() => {
+                console.log('Score passed to the server: ' + score);
+            });
         }
 
         function getInfo() {
