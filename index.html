@@ -118,13 +118,16 @@
                 console.log('Score passed to the server: ' + score);
             });
 
-            vkBridge.send("VKWebAppCallAPIMethod",
-                {
-                    "method": "secure.addAppEvent", "request_id": "request",
-                    "params": { "user_id": user_id.toString(), "activity_id": "2", "value": score.toString(), "v": "5.101", "access_token": token.toString() }
-                }
-            ).then(data => {
-                console.log(data);
+            vkBridge.send('VKWebAppGetUserInfo').then(data => {
+                user_id = data.id;
+                vkBridge.send("VKWebAppCallAPIMethod",
+                    {
+                        "method": "secure.addAppEvent", "request_id": "request",
+                        "params": { "user_id": user_id.toString(), "activity_id": "2", "value": score.toString(), "v": "5.101", "access_token": token.toString() }
+                    }
+                ).then(data => {
+                    console.log(data);
+                });
             });
         }
 
